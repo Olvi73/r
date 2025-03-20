@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>重复</title>
+    <style>
+        /* 容器样式 */
+        .grid-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center; /* 水平居中 */
+            align-items: center; /* 垂直居中 */
+            margin-top: 20px; /* 与标题的间距 */
+        }
+        /* 格子样式 */
+        .grid-item {
+            width: 20px;
+            height: 20px;
+            background-color: #40c463;
+        }
+        /* 大格子容器样式 */
+        .large-grid-wrapper {
+            display: flex;
+            align-items: center; /* 垂直居中 */
+            justify-content: center; /* 水平居中 */
+            gap: 10px; /* 文本与大格子之间的间距 */
+            margin: 20px auto; /* 居中显示 */
+        }
+        /* 大格子样式 */
+        .large-grid-item {
+            width: 100px;
+            height: 100px;
+            background-color: #ebedf0; /* 上半部分灰色 */
+            position: relative;
+            overflow: hidden;
+        }
+        /* 大格子的填充部分 */
+        .large-grid-item-fill {
+            width: 100%;
+            background-color: #40c463; /* 下半部分绿色 */
+            position: absolute;
+            bottom: 0;
+            left: 0;
+        }
+        /* 文本样式 */
+        .today-text {
+            font-family: 'Times New Roman', serif;
+            font-style: italic;
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+        /* 罗马斜体字体 */
+        .roman-italic {
+            font-family: 'Times New Roman', serif;
+            font-style: italic;
+        }
+        /* 微软字体 */
+        .microsoft-font {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        /* 标题居中 */
+        h1 {
+            text-align: center; /* 水平居中 */
+            display: flex;
+            flex-direction: column; /* 垂直排列 */
+            align-items: center; /* 内容居中 */
+            justify-content: center; /* 居中 */
+            gap: 5px; /* 行间距 */
+        }
+    </style>
+</head>
+<body>
+    <h1 id="title">
+        <span class="roman-italic">Days Since March 17, 2025</span>
+        <br>
+        <span class="roman-italic" id="untilText"></span>
+        <br>
+        <span class="roman-italic" id="timeDifference"></span>
+    </h1>
+    <div id="grid-container" class="grid-container"></div>
+    <br>
+    <div class="large-grid-wrapper">
+        <div class="today-text">Today <span id="fillPercentage"></span></div>
+        <div id="large-grid-container" class="large-grid-item">
+            <div id="large-grid-fill" class="large-grid-item-fill"></div>
+        </div>
+    </div>
+
+    <script>
+        // 定义起始日期
+        const startDate = new Date('2025-03-17');
+        // 定义结束日期（如果不需要结束日期，可以将其设置为 null）
+        // const endDate = new Date('2025-12-31'); // 你可以根据需要修改或删除此行
+        const endDate = null;
+        // 获取容器元素
+        const gridContainer = document.getElementById('grid-container');
+        // 获取大格子容器和填充部分元素
+        const largeGridContainer = document.getElementById('large-grid-container');
+        const largeGridFill = document.getElementById('large-grid-fill');
+        // 获取标题元素
+        const title = document.getElementById('title');
+        // 获取 untilText 和 timeDifference 元素
+        const untilText = document.getElementById('untilText');
+        const timeDifferenceElement = document.getElementById('timeDifference');
+
+        // 更新时间的函数
+        function updateTime() {
+            const currentDate = new Date();
+            const targetDate = endDate || currentDate;
+
+            // 计算时间差
+            const timeDifference = targetDate - startDate;
+            const days = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeDifference % (1000 * 60)) / 1000);
+
+            // 更新 untilText
+            untilText.textContent = endDate ? `Until ${targetDate.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            })}` : `Until Now ${currentDate.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            })}`;
+
+            // 更新 timeDifference
+            timeDifferenceElement.textContent = `${days} Day ${hours} Hr ${minutes} Min ${seconds} Sec`;
+
+            // 更新格子数量
+            gridContainer.innerHTML = ''; // 清空现有格子
+            for (let i = 0; i < days; i++) {
+                const gridItem = document.createElement('div');
+                gridItem.classList.add('grid-item');
+                gridContainer.appendChild(gridItem);
+            }
+
+            // 计算今天已过时间的比例
+            const startOfToday = new Date(currentDate);
+            startOfToday.setHours(0, 0, 0, 0);
+            const timePassedToday = currentDate - startOfToday;
+            const totalTimeToday = 24 * 60 * 60 * 1000; // 一天的毫秒数
+            const fillPercentage = (timePassedToday / totalTimeToday) * 100;
+
+            // 更新大格子的填充部分
+            largeGridFill.style.height = `${fillPercentage}%`;
+
+            // 更新 Today 后面的百分比
+            const fillPercentageElement = document.getElementById('fillPercentage');
+            fillPercentageElement.textContent = `${fillPercentage.toFixed(2)}%`; // 保留两位小数
+        }
+
+        // 初始调用
+        updateTime();
+        // 每秒更新一次时间
+        setInterval(updateTime, 1000);
+    </script>
+</body>
+</html>
