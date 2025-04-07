@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>重复</title>
+    <title>Lose</title>
     <style>
         /* 容器样式 */
         .grid-container {
@@ -70,9 +70,41 @@
             justify-content: center; /* 居中 */
             gap: 5px; /* 行间距 */
         }
+        /* 新增提示框样式 */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
+    <pre id="weight-data" style="display: none;">
+        2025-03-17 70.7
+        2025-03-24 70.1
+        2025-03-28 69.1
+        2025-04-02 68.15
+        2025-04-06 67.9
+    </pre>
     <h1 id="title">
         <span class="roman-italic">Days Since March 17, 2025</span>
         <br>
@@ -91,6 +123,26 @@
 
     <script>
         // 定义起始日期
+        // 新增：体重数据存储对象
+        let weightData = {};
+
+        // 新增：加载体重数据
+        async function loadWeightData() {
+            try {
+                const pre = document.getElementById('weight-data');
+                const text = pre.textContent;
+                const lines = text.trim().split('\n');
+                
+                lines.forEach(line => {
+                    const [date, weight] = line.trim().split(' ');
+                    if (date && weight) {
+                        weightData[date] = weight;
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading weight data:', error);
+            }
+        }
         const startDate = new Date('2025-03-17');
         startDate.setHours(0, 0, 0, 0);
         // 定义结束日期（如果不需要结束日期，可以将其设置为 null）
@@ -107,8 +159,17 @@
         const untilText = document.getElementById('untilText');
         const timeDifferenceElement = document.getElementById('timeDifference');
 
+        function getLocalDateString(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
         // 更新时间的函数
-        function updateTime() {
+        async function updateTime() {
+            if (Object.keys(weightData).length === 0) {
+                await loadWeightData();
+            }
             const currentDate = new Date();
             const targetDate = endDate || currentDate;
 
@@ -134,10 +195,23 @@
             timeDifferenceElement.textContent = `${days} Day ${hours} Hr ${minutes} Min ${seconds} Sec`;
 
             // 更新格子数量
-            gridContainer.innerHTML = ''; // 清空现有格子
+            gridContainer.innerHTML = '';
             for (let i = 0; i < days; i++) {
                 const gridItem = document.createElement('div');
-                gridItem.classList.add('grid-item');
+                gridItem.classList.add('grid-item', 'tooltip');
+                
+                // 计算当前格子对应的日期
+                const currentDate = new Date(startDate);
+                currentDate.setDate(startDate.getDate() + i);
+                const dateString = getLocalDateString(currentDate); 
+                
+                // 添加数据属性和提示
+                gridItem.dataset.date = dateString;
+                const tooltip = document.createElement('span');
+                tooltip.className = 'tooltiptext';
+                tooltip.textContent = weightData[dateString] || 'No data';
+                gridItem.appendChild(tooltip);
+                
                 gridContainer.appendChild(gridItem);
             }
 
@@ -160,6 +234,7 @@
         updateTime();
         // 每秒更新一次时间
         setInterval(updateTime, 1000);
+        
     </script>
 </body>
 </html>
